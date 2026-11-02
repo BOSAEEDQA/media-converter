@@ -1,0 +1,3 @@
+# سكربتات ويندوز تحتاج نهايات أسطر CRLF، وسكربتات الماك LF
+*.bat text eol=crlf
+*.sh  text eol=lf

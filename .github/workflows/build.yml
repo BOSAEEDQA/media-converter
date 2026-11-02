@@ -1,0 +1,85 @@
+# يبني «محوّل الوسائط» على أجهزة GitHub (ويندوز + ماك) وينشره في Releases.
+# التشغيل:
+#   - من GitHub: تبويب Actions ← Build ← Run workflow ← اكتب رقم الإصدار (مثل v1.0) ← Run
+#     (لو تركت الرقم فاضي: يبني فقط، والملفات تنزل من صفحة التشغيل نفسها تحت Artifacts)
+#   - أو برفع tag يبدأ بـ v (مثل v1.0)
+name: Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "رقم الإصدار للنشر في Releases (مثل v1.0) — اتركه فاضي للبناء فقط"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build (folder + portable)
+        shell: cmd
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: build_windows.bat
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            dist/MediaConverter-Windows.zip
+            dist/MediaConverter-Portable.exe
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Build (Universal: Intel + Apple Silicon)"
+        env:
+          # بايثون أدوات Xcode Universal، وهو نفس المستخدم في البناء على جهاز المطوّر
+          PYTHON: /usr/bin/python3
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          ./build_app.sh
+          mv "dist/محوّل الوسائط.zip" dist/MediaConverter-macOS.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/MediaConverter-macOS.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.version != ''
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.version || github.ref_name }}
+        run: |
+          gh release create "$TAG" out/* \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "محوّل الوسائط $TAG" --notes-file - <<'EOF'
+          ## التحميل
+          | الجهاز | الملف |
+          |---|---|
+          | ويندوز (تثبيت في مجلد) | `MediaConverter-Windows.zip` |
+          | ويندوز (محمولة — ملف واحد) | `MediaConverter-Portable.exe` |
+          | ماك (Intel و Apple Silicon) | `MediaConverter-macOS.zip` |
+
+          ## أول تشغيل
+          - **ويندوز:** لو طلع «Windows protected your PC» ← **More info** ← **Run anyway**.
+          - **ماك:** لو طلع «Not Opened» ← اضغط **Done** ← إعدادات النظام ← الخصوصية والأمان ← **Open Anyway**.
+          EOF

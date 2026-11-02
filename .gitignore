@@ -1,0 +1,12 @@
+# بيئة بايثون خاصة بكل جهاز — لا تُرفع
+.venv/
+__pycache__/
+*.pyc
+
+# مخرجات البناء — مكانها Releases وليس الكود
+build/
+dist/
+*.spec
+
+.DS_Store
+Thumbs.db
