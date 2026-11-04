@@ -10,3 +10,7 @@ dist/
 
 .DS_Store
 Thumbs.db
+
+# ملاحظات خاصة، تبقى على الجهاز وما تنرفع
+*.md
+!README.md

@@ -55,4 +55,3 @@
 | `build_app.sh` | بناء نسخة الماك (Universal) مع التوقيع |
 | `build_windows.bat` | بناء نسختي الويندوز (مجلد + محمولة) |
 | `.github/workflows/build.yml` | البناء والنشر التلقائي على GitHub |
-| `WINDOWS.md` | ملاحظات تقنية للعمل على ويندوز |
